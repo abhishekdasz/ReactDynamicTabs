@@ -1,12 +1,18 @@
+import 'bootstrap/dist/css/bootstrap.min.css';
 import React, { useState, useEffect } from "react";
 import { Button, Tab, Tabs } from "react-bootstrap";
+import TextRenderer from "../util/TextRenderer";
+import FormWidgets from "../FormWidgets/FormWidgets";
+import TreeComponent from '../util/TreeComponent';
 import Editor from "@monaco-editor/react";
+import { useTranslation } from 'react-i18next';
 
 const TabsWithCloseButtons = (props) => {
+  const { t } = useTranslation();
   const mode = document.querySelector("body").getAttribute('data-theme');
   const [activeKey, setActiveKey] = useState("tab-1");
   const [tabs, setTabs] = useState([
-    { id: "tab-1", title: "Code Editor", content: "Content of Tab 1" },
+    { id: "tab-1", title: "Code Editor", value: props.regMsg || '' },
   ]);
 
   useEffect(() => {
@@ -22,82 +28,92 @@ const TabsWithCloseButtons = (props) => {
   };
 
   const handleAddTab = () => {
-    const newId = `tab-${tabs.length + 1}`;
+    const newIdNum = tabs.length + 1;
     const newTab = {
-      id: newId,
-      title: `Tab ${tabs.length + 1}`,
-      content: `This is content of ${newId}`,
+      id: `tab-${newIdNum}`,
+      title: `New Tab ${newIdNum}`,
+      value: ''
     };
     setTabs([...tabs, newTab]);
-    setActiveKey(newId);
+    setActiveKey(newTab.id);
+  };
+
+  const handleEditorChange = (value, tabId) => {
+    const updatedTabs = tabs.map(tab =>
+      tab.id === tabId ? { ...tab, value } : tab
+    );
+    setTabs(updatedTabs);
+    if (tabId === 'tab-1') {
+      props.setRegMsg(value);
+    }
   };
 
   return (
     <div className='tabdivs'>
-      <div className="d-flex align-items-center mb-2">
-        <Tabs
-          activeKey={activeKey}
-          onSelect={(k) => setActiveKey(k)}
-          className="flex-grow-1"
-        >
-          {tabs.map((tab) => (
-            <Tab
-              eventKey={tab.id}
-              title={
-                <div className="d-flex align-items-center tab-title">
-                  {tab.title}
+      <Tabs
+        activeKey={activeKey}
+        onSelect={(k) => {
+          if (k === "add-tab") {
+            handleAddTab();
+          } else {
+            setActiveKey(k);
+          }
+        }}
+        className="mb-0"
+      >
+        {tabs.map((tab) => (
+          <Tab
+            eventKey={tab.id}
+            title={
+              <div className="d-flex align-items-center tab-title">
+                {tab.title}
+                {tab.id !== "tab-1" && (
                   <Button
                     variant="link"
                     className="ml-2 p-0"
                     style={{ color: "black", textDecoration: "none", marginLeft: '5px' }}
                     onClick={(e) => {
-                      e.stopPropagation();
+                      e.stopPropagation(); // Prevent tab switching on close
                       handleCloseTab(tab.id);
                     }}
                   >
-                    ×
+                    &times;
                   </Button>
-                </div>
-              }
-              key={tab.id}
-            >
-              <div style={{ height: '78vh', padding: "15px" }}>
-                <Editor
-                  className="EditorContainer"
-                  defaultLanguage={props.language || "javascript"}
-                  theme={mode === 'dark' ? "vs-dark" : "light"}
-                  value={props.regMsg}
-                  onChange={(value) => props.setRegMsg(value)}
-                  options={{
-                    wordWrap: "on",
-                    lineNumbers: "on",
-                    scrollbar: { vertical: "visible" }
-                  }}
-                />
+                )}
               </div>
-            </Tab>
-          ))}
-        </Tabs>
+            }
+            key={tab.id}
+          >
+            <div style={{ height: '78vh' }}>
+              <Editor
+                className="EditorContainer"
+                defaultLanguage="java"
+                theme={mode === 'dark' ? "vs-dark" : ""}
+                value={tab.value}
+                onChange={(value) => handleEditorChange(value, tab.id)}
+                options={{
+                  wordWrap: "on",
+                  lineNumbers: "on",
+                  scrollbar: { vertical: "visible" }
+                }}
+              />
+            </div>
+          </Tab>
+        ))}
 
-        {/* "+" Button beside tabs */}
-        <div
-          onClick={handleAddTab}
-          style={{
-            cursor: 'pointer',
-            padding: '6px 12px',
-            border: '1px solid #dee2e6',
-            borderRadius: '0.375rem',
-            marginLeft: '8px',
-            fontSize: '1.2rem',
-            userSelect: 'none',
-            background: '#fff',
-          }}
-        >
-          ＋
-        </div>
-      </div>
+        {/* ➕ Add New Tab */}
+        <Tab
+          eventKey="add-tab"
+          title={
+            <div className="d-flex align-items-center tab-title text-primary">
+              ＋
+            </div>
+          }
+          disabled
+        />
+      </Tabs>
     </div>
   );
 };
 
-export default TabsWithCloseButtons;
+export default TabsWithCloseButtons;qa

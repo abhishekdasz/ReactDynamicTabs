@@ -18,7 +18,7 @@ const DynamicTabs = () => {
       content: `This is Tab ${newId} content`,
     };
     setTabs([...tabs, newTab]);
-    setKey(newKey);
+    setKey(newTab.key);
   };
 
   return (
